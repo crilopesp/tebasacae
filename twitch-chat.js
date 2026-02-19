@@ -589,15 +589,18 @@
       user.addEventListener("click", onUserClick);
 
       const badgesEl = renderBadges(normalizedBadges);
+      const content = document.createElement("span");
+      content.className = "chat-content";
       const body = document.createElement("span");
       body.className = "chat-body";
       appendRichContent(body, text);
 
       row.append(time);
       if (badgesEl.childElementCount) {
-        row.append(badgesEl);
+        content.append(badgesEl);
       }
-      row.append(user, body);
+      content.append(user, body);
+      row.append(content);
       line.append(row);
       return line;
     }
@@ -1273,12 +1276,15 @@
       const user = document.createElement("span");
       user.className = "chat-name";
       user.textContent = `${displayName}:`;
-      row.append(user);
+      const content = document.createElement("span");
+      content.className = "chat-content";
+      content.append(user);
 
       const body = document.createElement("span");
       body.className = "chat-body";
       appendRichContent(body, entry.text || "");
-      row.append(body);
+      content.append(body);
+      row.append(content);
 
       line.append(row);
       return line;

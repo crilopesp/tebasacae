@@ -16,8 +16,6 @@ const available = {
 
 const ui = {
   videoFrame: byId("videoFrame"),
-  videoPane: document.querySelector(".video-pane"),
-  videoTapLayer: byId("videoTapLayer"),
   layout: byId("layout"),
   chatPane: byId("chatPane"),
   officialChat: byId("officialChat"),
@@ -30,18 +28,22 @@ const ui = {
   dock: document.querySelector(".dock"),
   settingsButton: document.querySelector(".settings-btn"),
   dockBackdrop: byId("dockBackdrop"),
+  chatOverlayToggle: byId("chatOverlayToggle"),
   videoButtons: Array.from(document.querySelectorAll('[data-kind="video-source"]')),
   chatButtons: Array.from(document.querySelectorAll('[data-kind="chat-source"]')),
 };
 
-const mobileDockQuery = window.matchMedia("(max-width: 640px)");
+const mobilePortraitQuery = window.matchMedia("(max-width: 640px)");
+const mobileLandscapeQuery = window.matchMedia(
+  "(orientation: landscape) and (pointer: coarse) and (max-width: 960px) and (max-height: 540px)",
+);
 const host = window.location.hostname || "localhost";
 
 const state = {
   video: normalizeVideo(params.get("video")),
   chatType: normalizeChatType(params.get("chat")),
+  chatPanelOpen: true,
 };
-let lastEnabledChatType = state.chatType !== SOURCE.NONE ? state.chatType : SOURCE.TWITCH_7TV_CHAT;
 
 const twitchChat = createTwitchChatClient({
   messagesEl: ui.chatMessages,
@@ -57,7 +59,6 @@ wireEvents();
 function wireEvents() {
   bindSourceButtons(ui.videoButtons, "video");
   bindSourceButtons(ui.chatButtons, "chatType");
-  wireMobileVideoDoubleTap();
   wireVideoTitleUpdates();
 
   if (ui.settingsButton && ui.dock) {
@@ -91,12 +92,26 @@ function wireEvents() {
     });
   }
 
-  const onViewportChange = () => closeMobileDock();
-  if (mobileDockQuery.addEventListener) {
-    mobileDockQuery.addEventListener("change", onViewportChange);
-  } else if (mobileDockQuery.addListener) {
-    mobileDockQuery.addListener(onViewportChange);
+  if (ui.chatOverlayToggle) {
+    ui.chatOverlayToggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      state.chatPanelOpen = !state.chatPanelOpen;
+      renderChat();
+    });
   }
+
+  const onViewportChange = () => {
+    closeMobileDock();
+    render();
+  };
+
+  [mobilePortraitQuery, mobileLandscapeQuery].forEach((query) => {
+    if (query.addEventListener) {
+      query.addEventListener("change", onViewportChange);
+    } else if (query.addListener) {
+      query.addListener(onViewportChange);
+    }
+  });
 }
 
 function wireVideoTitleUpdates() {
@@ -122,91 +137,15 @@ function bindSourceButtons(buttons, stateKey) {
       }
 
       state[stateKey] = source;
+      if (stateKey === "chatType" && source !== SOURCE.NONE) {
+        state.chatPanelOpen = true;
+      }
       sanitizeState();
-      rememberLastEnabledChat();
       pushQuery();
       render();
       closeMobileDock();
     });
   });
-}
-
-function wireMobileVideoDoubleTap() {
-  if (!ui.videoTapLayer) {
-    return;
-  }
-
-  let singleTapTimer = null;
-  let lastTapAt = 0;
-  const maxDelayMs = 320;
-
-  ui.videoTapLayer.addEventListener("pointerup", (event) => {
-    if (!isMobileDock()) {
-      return;
-    }
-
-    event.preventDefault();
-    const now = Date.now();
-    const isDoubleTap = now - lastTapAt <= maxDelayMs;
-    lastTapAt = now;
-
-    if (isDoubleTap) {
-      if (singleTapTimer) {
-        clearTimeout(singleTapTimer);
-        singleTapTimer = null;
-      }
-      lastTapAt = 0;
-      toggleChatVisibility();
-      return;
-    }
-
-    const point = { clientX: event.clientX, clientY: event.clientY };
-    singleTapTimer = window.setTimeout(() => {
-      singleTapTimer = null;
-      forwardSingleTap(point);
-    }, maxDelayMs + 10);
-  });
-}
-
-function forwardSingleTap(point) {
-  if (!ui.videoTapLayer) {
-    return;
-  }
-
-  ui.videoTapLayer.style.pointerEvents = "none";
-  const target = document.elementFromPoint(point.clientX, point.clientY);
-  ui.videoTapLayer.style.pointerEvents = "";
-
-  if (!target || target === ui.videoTapLayer) {
-    return;
-  }
-
-  if (target === ui.videoFrame) {
-    target.focus();
-  }
-
-  target.dispatchEvent(
-    new MouseEvent("click", {
-      bubbles: true,
-      cancelable: true,
-      clientX: point.clientX,
-      clientY: point.clientY,
-      view: window,
-    }),
-  );
-}
-
-function toggleChatVisibility() {
-  if (state.chatType === SOURCE.NONE) {
-    state.chatType = resolveChatTypeToEnable();
-  } else {
-    state.chatType = SOURCE.NONE;
-  }
-
-  sanitizeState();
-  rememberLastEnabledChat();
-  pushQuery();
-  render();
 }
 
 function sanitizeState() {
@@ -216,12 +155,6 @@ function sanitizeState() {
 
   if (state.chatType !== SOURCE.NONE && !hasChatSource(state.chatType)) {
     state.chatType = SOURCE.NONE;
-  }
-}
-
-function rememberLastEnabledChat() {
-  if (state.chatType !== SOURCE.NONE) {
-    lastEnabledChatType = state.chatType;
   }
 }
 
@@ -238,9 +171,17 @@ function renderVideo() {
 
 function renderChat() {
   const shouldShow = state.chatType !== SOURCE.NONE;
+  const overlayMode = isMobileLandscape();
+  const forceOpenInMobilePortrait = shouldShow && isMobileDock() && !overlayMode;
+  const panelOpen = shouldShow ? (forceOpenInMobilePortrait ? true : state.chatPanelOpen) : false;
+  const overlayOpen = overlayMode ? panelOpen : false;
+  const splitOpen = !overlayMode ? panelOpen : false;
 
-  ui.chatPane.hidden = !shouldShow;
-  ui.layout.classList.toggle("chat-visible", shouldShow);
+  ui.chatPane.hidden = !shouldShow || (!overlayMode && !splitOpen);
+  ui.layout.classList.toggle("chat-visible", shouldShow && !overlayMode && splitOpen);
+  ui.layout.classList.toggle("chat-overlay-mode", shouldShow && overlayMode);
+  ui.layout.classList.toggle("chat-overlay-open", overlayOpen);
+  renderChatOverlayToggle(shouldShow, panelOpen, overlayMode);
 
   if (state.chatType === SOURCE.TWITCH_OFFICIAL_CHAT && available.twitch) {
     ui.officialChat.hidden = false;
@@ -299,19 +240,6 @@ function hasChatSource(source) {
     source === SOURCE.NONE ||
     ((source === SOURCE.TWITCH_OFFICIAL_CHAT || source === SOURCE.TWITCH_7TV_CHAT) && Boolean(available.twitch))
   );
-}
-
-function resolveChatTypeToEnable() {
-  if (lastEnabledChatType !== SOURCE.NONE && hasChatSource(lastEnabledChatType)) {
-    return lastEnabledChatType;
-  }
-  if (hasChatSource(SOURCE.TWITCH_7TV_CHAT)) {
-    return SOURCE.TWITCH_7TV_CHAT;
-  }
-  if (hasChatSource(SOURCE.TWITCH_OFFICIAL_CHAT)) {
-    return SOURCE.TWITCH_OFFICIAL_CHAT;
-  }
-  return SOURCE.NONE;
 }
 
 function buildVideoSrc(source) {
@@ -471,7 +399,11 @@ function clean(value) {
 }
 
 function isMobileDock() {
-  return mobileDockQuery.matches;
+  return mobilePortraitQuery.matches || mobileLandscapeQuery.matches;
+}
+
+function isMobileLandscape() {
+  return mobileLandscapeQuery.matches;
 }
 
 function closeMobileDock() {
@@ -483,4 +415,22 @@ function closeMobileDock() {
   if (ui.settingsButton) {
     ui.settingsButton.setAttribute("aria-expanded", "false");
   }
+}
+
+function renderChatOverlayToggle(shouldShow, panelOpen, overlayMode) {
+  if (!ui.chatOverlayToggle) {
+    return;
+  }
+
+  const visible = shouldShow && (overlayMode || !isMobileDock());
+  ui.chatOverlayToggle.classList.toggle("overlay-mode", shouldShow && overlayMode);
+  ui.chatOverlayToggle.hidden = !visible;
+  if (!visible) {
+    ui.chatOverlayToggle.setAttribute("aria-expanded", "false");
+    ui.chatOverlayToggle.setAttribute("aria-label", "Mostrar chat");
+    return;
+  }
+
+  ui.chatOverlayToggle.setAttribute("aria-expanded", String(panelOpen));
+  ui.chatOverlayToggle.setAttribute("aria-label", panelOpen ? "Ocultar chat" : "Mostrar chat");
 }

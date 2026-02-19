@@ -1,38 +1,39 @@
-# Multi viewer Youtube / Chat Twitch
+# Multi viewer YouTube / Twitch
 
-Minimal static viewer for live streams with optional chat.
+Visor estático para directos de YouTube o Twitch, con chat opcional de Twitch.
 
-<img width="2255" height="1303" alt="image" src="https://github.com/user-attachments/assets/28147a2d-6235-4380-91f9-89b03e9baaff" />
+## Uso rápido
 
-
-## Features
-
-- Twitch or YouTube live video embed.
-- Twitch chat in two modes: official Twitch embed or custom IRC + 7TV emotes.
-- Compact source selector (desktop and mobile).
-
-## Run locally
+1. Levanta un servidor local:
 
 ```bash
 python3 -m http.server 8080
 ```
 
-Open `http://localhost:8080`.
-
-## Query parameters
-
-- `youtube`: YouTube channel ID (`UC...`) or channel URL (`/channel/UC...`).
-- `twitch`: Twitch channel name or Twitch URL.
-- `video`: `twitch` or `youtube`.
-- `chat`: `twitch-official`, `twitch-7tv` (or legacy `twitch`) or `none`.
-
-## Notes
-
-- Chat emotes are loaded from `https://emotes.crippled.dev` (global + channel 7TV sets).
-- If no valid source is available, the viewer falls back to an empty frame.
-
-## Example
+2. Abre:
 
 ```text
-http://localhost:8080/?twitch=illojuan&video=twitch&chat=twitch-official
+http://localhost:8080
+```
+
+3. Configura la URL con parámetros:
+
+- `youtube`: Channel ID de YouTube (`UC...`) o URL tipo `/channel/UC...`.
+- `twitch`: nombre de canal de Twitch o URL de Twitch.
+- `video`: `youtube` o `twitch`.
+- `chat`: `twitch-official`, `twitch-7tv` o `none`.
+
+## Cómo sacar el `channelId` de YouTube
+
+Este proyecto solo acepta `channelId` tipo `UC...` (no `@handle`).
+
+Opciones:
+
+1. Desde la URL del canal: entra al canal y usa la URL que contiene `/channel/UC...`.
+2. Desde el código fuente de la página del canal: busca `"channelId"` y copia el valor `UC...`.
+
+Ejemplo válido:
+
+```text
+http://localhost:8080/?youtube=UC_x5XG1OV2P6uZZ5FSM9Ttw&video=youtube&chat=none
 ```

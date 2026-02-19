@@ -3,6 +3,11 @@
   --ui-bg: rgb(10 10 10 / 80%);
   --ui-border: rgb(255 255 255 / 24%);
   --ui-sep: rgb(255 255 255 / 28%);
+  --overlay-bg: rgb(12 12 14 / 92%);
+  --overlay-border: rgb(255 255 255 / 18%);
+  --overlay-surface: rgb(255 255 255 / 6%);
+  --overlay-surface-hover: rgb(255 255 255 / 12%);
+  --overlay-title: rgb(255 255 255 / 72%);
   --icon: #fff;
   --icon-active: #000;
   --chat-text: #efeff1;
@@ -12,6 +17,10 @@
   --chat-row-b: #1f1f23;
   --chat-link-accent: #68b6ff;
   --chat-link-accent-mod: #ffd787;
+  --scrollbar-track: rgb(255 255 255 / 6%);
+  --scrollbar-thumb: rgb(255 255 255 / 20%);
+  --scrollbar-thumb-hover: rgb(255 255 255 / 30%);
+  --scrollbar-thumb-active: rgb(255 255 255 / 36%);
 }
 
 * {
@@ -23,6 +32,47 @@ body {
   margin: 0;
   height: 100%;
   background: var(--bg);
+  color-scheme: dark;
+}
+
+.chat-messages,
+.chat-user-card-layout,
+.chat-user-card-recent-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.chat-messages::-webkit-scrollbar,
+.chat-user-card-layout::-webkit-scrollbar,
+.chat-user-card-recent-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-track,
+.chat-user-card-layout::-webkit-scrollbar-track,
+.chat-user-card-recent-list::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.chat-messages::-webkit-scrollbar-thumb,
+.chat-user-card-layout::-webkit-scrollbar-thumb,
+.chat-user-card-recent-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: var(--scrollbar-thumb);
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover,
+.chat-user-card-layout::-webkit-scrollbar-thumb:hover,
+.chat-user-card-recent-list::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+.chat-messages::-webkit-scrollbar-thumb:active,
+.chat-user-card-layout::-webkit-scrollbar-thumb:active,
+.chat-user-card-recent-list::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
 }
 
 .layout {
@@ -56,14 +106,6 @@ iframe {
   width: 100%;
   height: 100%;
   border: 0;
-}
-
-.video-tap-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  touch-action: manipulation;
 }
 
 .custom-chat {
@@ -155,6 +197,15 @@ iframe {
 
 .chat-row {
   margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+}
+
+.chat-content {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .chat-line-odd {
@@ -167,15 +218,16 @@ iframe {
 
 .chat-time {
   color: #7d7d86;
-  margin-right: 5px;
+  flex: 0 0 auto;
   font-size: 11px;
+  line-height: 1.4;
 }
 
 .chat-badges {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  margin-right: 5px;
+  flex: 0 0 auto;
   vertical-align: middle;
 }
 
@@ -190,9 +242,14 @@ iframe {
 }
 
 .chat-name {
-  margin-right: 5px;
+  flex: 0 0 auto;
   font-weight: 700;
   cursor: pointer;
+}
+
+.chat-content .chat-badges,
+.chat-content .chat-name {
+  margin-right: 4px;
 }
 
 .chat-user-card {
@@ -741,21 +798,120 @@ iframe {
   align-items: center;
   gap: 8px;
   padding: 6px;
-  border: 1px solid var(--ui-border);
-  border-radius: 14px;
-  background: var(--ui-bg);
+  border: 1px solid var(--overlay-border);
+  border-radius: 999px;
+  background: rgb(12 12 14 / 32%);
+  box-shadow:
+    0 8px 20px rgb(0 0 0 / 45%),
+    inset 0 1px 0 rgb(255 255 255 / 10%);
   overflow: hidden;
+  border-color: rgb(255 255 255 / 14%);
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
+  transition:
+    padding 180ms ease,
+    gap 180ms ease,
+    width 180ms ease,
+    height 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    backdrop-filter 180ms ease;
 }
 
 .dock-backdrop {
   display: none;
 }
 
+.chat-overlay-toggle {
+  position: fixed;
+  top: 50%;
+  right: 8px;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 74px;
+  height: 40px;
+  padding: 0 9px;
+  border: 1px solid var(--overlay-border);
+  border-radius: 999px;
+  background: rgb(12 12 14 / 32%);
+  transform: translateY(-50%);
+  cursor: pointer;
+  border-color: rgb(255 255 255 / 14%);
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
+  box-shadow:
+    0 8px 20px rgb(0 0 0 / 45%),
+    inset 0 1px 0 rgb(255 255 255 / 10%);
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    backdrop-filter 180ms ease;
+}
+
+.chat-overlay-toggle[hidden] {
+  display: none !important;
+}
+
+.chat-overlay-toggle:hover,
+.chat-overlay-toggle:focus-visible {
+  background: var(--overlay-bg);
+  border-color: rgb(255 255 255 / 26%);
+  outline: none;
+}
+
+.dock:hover,
+.dock:focus-within,
+.chat-overlay-toggle:hover,
+.chat-overlay-toggle:focus-visible {
+  background: var(--overlay-bg);
+  border-color: rgb(255 255 255 / 26%);
+  box-shadow:
+    0 8px 20px rgb(0 0 0 / 45%),
+    inset 0 1px 0 rgb(255 255 255 / 14%);
+}
+
+.dock.mobile-open,
+.chat-overlay-toggle[aria-expanded="true"] {
+  background: var(--overlay-bg);
+  border-color: rgb(255 255 255 / 26%);
+  box-shadow:
+    0 8px 20px rgb(0 0 0 / 45%),
+    inset 0 1px 0 rgb(255 255 255 / 14%);
+}
+
+.chat-overlay-chevron,
+.chat-overlay-bubble {
+  width: 18px;
+  height: 18px;
+}
+
+.chat-overlay-chevron path,
+.chat-overlay-bubble path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chat-overlay-chevron path {
+  transition: transform 160ms ease;
+  transform-origin: 50% 50%;
+}
+
+.chat-overlay-toggle[aria-expanded="true"] .chat-overlay-chevron path {
+  transform: rotate(180deg);
+}
+
 .settings-btn,
 .source-btn {
   border: 1px solid rgb(255 255 255 / 14%);
   border-radius: 999px;
-  background: rgb(255 255 255 / 4%);
+  background: var(--overlay-surface);
   color: var(--icon);
   cursor: pointer;
   display: grid;
@@ -822,7 +978,11 @@ iframe {
 }
 
 .source-btn .play {
-  fill: #000;
+  fill: #0f0f10;
+}
+
+.source-btn.active .play {
+  fill: #fff;
 }
 
 .settings-btn:hover,
@@ -830,14 +990,14 @@ iframe {
 .source-btn:hover,
 .source-btn:focus-visible {
   border-color: rgb(255 255 255 / 26%);
-  background: rgb(255 255 255 / 10%);
+  background: var(--overlay-surface-hover);
   outline: none;
 }
 
 .settings-btn:hover,
 .settings-btn:focus-visible {
   border-color: rgb(255 255 255 / 18%);
-  background: rgb(255 255 255 / 6%);
+  background: var(--overlay-surface);
 }
 
 .source-btn.active {
@@ -864,33 +1024,48 @@ iframe {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 0;
   max-width: 0;
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
-  transition: max-width 180ms ease, opacity 180ms ease;
+  transition: max-width 180ms ease, opacity 180ms ease, padding 180ms ease;
 }
 
 .dock:hover .dock-panel,
 .dock:focus-within .dock-panel {
+  padding: 0;
   max-width: 360px;
   opacity: 1;
   pointer-events: auto;
+}
+
+.dock:not(:hover):not(:focus-within) {
+  gap: 0;
+  width: 60px;
+  height: 60px;
+  padding: 6px;
+  justify-content: center;
 }
 
 .selector-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 6px;
-  border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 10px;
-  background: rgb(0 0 0 / 16%);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.dock:hover .selector-group,
+.dock:focus-within .selector-group {
+  padding: 0 10px;
 }
 
 .selector-title {
   margin: 0;
-  color: rgb(255 255 255 / 72%);
+  color: var(--overlay-title);
   font: 700 10px/1.2 system-ui, sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -940,14 +1115,37 @@ iframe {
   }
 }
 
-@media (max-width: 640px) {
-  .video-tap-layer {
-    pointer-events: auto;
+@media (max-width: 640px), (orientation: landscape) and (pointer: coarse) and (max-width: 960px) and (max-height: 540px) {
+  .dock {
+    top: auto;
+    bottom: 8px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgb(12 12 14 / 28%);
+    border-color: var(--overlay-border);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
-  .dock {
-    top: 8px;
-    right: 8px;
+  .chat-overlay-toggle {
+    top: auto;
+    right: auto;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .chat-overlay-toggle[aria-expanded="true"] {
+    background: var(--overlay-bg);
+  }
+
+  .dock:not(.mobile-open) {
+    gap: 0;
+    width: 54px;
+    height: 54px;
+    padding: 6px;
+    justify-content: center;
   }
 
   .settings-btn {
@@ -956,8 +1154,13 @@ iframe {
   }
 
   .source-btn {
-    width: 30px;
-    height: 30px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .source-btn svg {
+    width: 24px;
+    height: 24px;
   }
 
   .sep {
@@ -966,15 +1169,21 @@ iframe {
 
   .dock:hover .dock-panel,
   .dock:focus-within .dock-panel {
+    padding: 0;
     max-width: 0;
     opacity: 0;
     pointer-events: none;
   }
 
   .dock.mobile-open .dock-panel {
+    padding: 0;
     max-width: 320px;
     opacity: 1;
     pointer-events: auto;
+  }
+
+  .dock.mobile-open .selector-group {
+    padding: 0 10px;
   }
 
   .dock.mobile-open + .dock-backdrop {
@@ -987,5 +1196,117 @@ iframe {
     padding: 0;
     background: transparent;
     cursor: default;
+  }
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .dock [data-kind="chat-source"][data-source="none"] {
+    display: none;
+  }
+
+  .chat-overlay-toggle {
+    bottom: 72px;
+  }
+}
+
+@media (orientation: landscape) and (pointer: coarse) and (max-width: 960px) and (max-height: 540px) {
+  .video-pane {
+    aspect-ratio: auto;
+    height: 100%;
+    align-self: stretch;
+  }
+
+  .dock {
+    left: auto;
+    right: 8px;
+    transform: none;
+    background: rgb(12 12 14 / 10%);
+    border-color: rgb(255 255 255 / 12%);
+    backdrop-filter: blur(8px) saturate(112%);
+    -webkit-backdrop-filter: blur(8px) saturate(112%);
+  }
+
+  .dock:hover,
+  .dock:focus-within {
+    background: rgb(12 12 14 / 24%);
+    border-color: rgb(255 255 255 / 18%);
+  }
+
+  .dock.mobile-open {
+    background: rgb(12 12 14 / 24%);
+    border-color: rgb(255 255 255 / 18%);
+  }
+
+  .chat-overlay-toggle.overlay-mode {
+    top: 50%;
+    right: 8px;
+    bottom: auto;
+    left: auto;
+    transform: translateY(-50%);
+    background: rgb(12 12 14 / 10%);
+    border-color: rgb(255 255 255 / 12%);
+    backdrop-filter: blur(8px) saturate(112%);
+    -webkit-backdrop-filter: blur(8px) saturate(112%);
+  }
+
+  .layout.chat-overlay-mode {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .layout.chat-overlay-mode .chat-pane {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(360px, 78vw);
+    border-top: 0;
+    border-left: 1px solid rgb(255 255 255 / 12%);
+    z-index: 11;
+    background: rgb(24 24 27 / 10%);
+    backdrop-filter: blur(8px) saturate(112%);
+    -webkit-backdrop-filter: blur(8px) saturate(112%);
+    box-shadow: -12px 0 30px rgb(0 0 0 / 45%);
+    transform: translateX(102%);
+    transition: transform 180ms ease;
+  }
+
+  .layout.chat-overlay-open .chat-pane {
+    transform: translateX(0);
+    background: rgb(24 24 27 / 20%);
+  }
+
+  .layout.chat-overlay-mode .chat-line-odd {
+    background: transparent;
+  }
+
+  .layout.chat-overlay-mode .chat-line-even {
+    background: transparent;
+  }
+
+  .layout.chat-overlay-mode .chat-header {
+    background: rgb(24 24 27 / 18%);
+  }
+
+  .layout.chat-overlay-mode .chat-pin {
+    background: rgb(77 57 18 / 20%);
+    border-bottom-color: rgb(255 224 130 / 26%);
+  }
+
+  .dock .selector-title,
+  .layout.chat-overlay-mode .selector-title,
+  .layout.chat-overlay-mode .chat-pin-label {
+    text-shadow: 0 1px 2px rgb(0 0 0 / 92%), 0 0 8px rgb(0 0 0 / 64%);
+  }
+
+  .layout.chat-overlay-mode .chat-title,
+  .layout.chat-overlay-mode .chat-meta,
+  .layout.chat-overlay-mode .chat-time,
+  .layout.chat-overlay-mode .chat-name,
+  .layout.chat-overlay-mode .chat-body {
+    text-shadow: 0 1px 2px rgb(0 0 0 / 92%), 0 0 10px rgb(0 0 0 / 72%);
+  }
+
+  .layout.chat-overlay-mode .chat-time {
+    color: rgb(235 235 240 / 92%);
   }
 }
