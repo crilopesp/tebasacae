@@ -38,6 +38,7 @@ const mobileLandscapeQuery = window.matchMedia(
   "(orientation: landscape) and (pointer: coarse) and (max-width: 960px) and (max-height: 540px)",
 );
 const host = window.location.hostname || "localhost";
+let viewportStabilizeTimer = null;
 
 const state = {
   video: normalizeVideo(params.get("video")),
@@ -103,6 +104,7 @@ function wireEvents() {
   const onViewportChange = () => {
     closeMobileDock();
     render();
+    scheduleViewportStabilizeRender();
   };
 
   [mobilePortraitQuery, mobileLandscapeQuery].forEach((query) => {
@@ -112,6 +114,10 @@ function wireEvents() {
       query.addListener(onViewportChange);
     }
   });
+
+  if (window.visualViewport?.addEventListener) {
+    window.visualViewport.addEventListener("resize", onViewportChange, { passive: true });
+  }
 }
 
 function wireVideoTitleUpdates() {
@@ -415,6 +421,16 @@ function closeMobileDock() {
   if (ui.settingsButton) {
     ui.settingsButton.setAttribute("aria-expanded", "false");
   }
+}
+
+function scheduleViewportStabilizeRender() {
+  if (viewportStabilizeTimer) {
+    clearTimeout(viewportStabilizeTimer);
+  }
+  viewportStabilizeTimer = setTimeout(() => {
+    render();
+    viewportStabilizeTimer = null;
+  }, 180);
 }
 
 function renderChatOverlayToggle(shouldShow, panelOpen, overlayMode) {

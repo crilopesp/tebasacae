@@ -33,6 +33,8 @@ body {
   height: 100%;
   background: var(--bg);
   color-scheme: dark;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 .chat-messages,
@@ -113,6 +115,8 @@ iframe {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   color: var(--chat-text);
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 .official-chat {
@@ -180,6 +184,9 @@ iframe {
 .chat-messages {
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
   padding: 6px 8px 12px;
   display: flex;
   flex-direction: column;
@@ -1097,6 +1104,7 @@ iframe {
   .video-pane {
     width: 100%;
     aspect-ratio: 16 / 9;
+    height: auto;
     align-self: start;
   }
 
@@ -1237,12 +1245,20 @@ iframe {
     border-color: rgb(255 255 255 / 18%);
   }
 
-  .chat-overlay-toggle.overlay-mode {
-    top: 50%;
+  .chat-overlay-toggle {
+    top: 8px;
     right: 8px;
     bottom: auto;
     left: auto;
-    transform: translateY(-50%);
+    transform: none;
+  }
+
+  .chat-overlay-toggle.overlay-mode {
+    top: 8px;
+    right: 8px;
+    bottom: auto;
+    left: auto;
+    transform: none;
     background: rgb(12 12 14 / 10%);
     border-color: rgb(255 255 255 / 12%);
     backdrop-filter: blur(8px) saturate(112%);
@@ -1268,6 +1284,8 @@ iframe {
     box-shadow: -12px 0 30px rgb(0 0 0 / 45%);
     transform: translateX(102%);
     transition: transform 180ms ease;
+    touch-action: pan-y;
+    pointer-events: auto;
   }
 
   .layout.chat-overlay-open .chat-pane {
