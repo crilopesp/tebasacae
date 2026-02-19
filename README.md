@@ -1,6 +1,9 @@
-# Stream Viewer
+# Multi viewer Youtube / Chat Twitch
 
 Minimal static viewer for live streams with optional chat.
+
+<img width="2255" height="1303" alt="image" src="https://github.com/user-attachments/assets/28147a2d-6235-4380-91f9-89b03e9baaff" />
+
 
 ## Features
 
