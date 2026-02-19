@@ -7,6 +7,7 @@ const SOURCE = {
   TWITCH_OFFICIAL_CHAT: "twitch-official",
   TWITCH_7TV_CHAT: "twitch-7tv",
 };
+const APP_TITLE = "TEBASACAE";
 
 const available = {
   youtube: normalizeYouTubeChannel(params.get("youtube")),
@@ -57,6 +58,7 @@ function wireEvents() {
   bindSourceButtons(ui.videoButtons, "video");
   bindSourceButtons(ui.chatButtons, "chatType");
   wireMobileVideoDoubleTap();
+  wireVideoTitleUpdates();
 
   if (ui.settingsButton && ui.dock) {
     ui.settingsButton.setAttribute("aria-expanded", "false");
@@ -95,6 +97,16 @@ function wireEvents() {
   } else if (mobileDockQuery.addListener) {
     mobileDockQuery.addListener(onViewportChange);
   }
+}
+
+function wireVideoTitleUpdates() {
+  if (!ui.videoFrame) {
+    return;
+  }
+
+  ui.videoFrame.addEventListener("load", () => {
+    document.title = getCurrentStreamTitle();
+  });
 }
 
 function bindSourceButtons(buttons, stateKey) {
@@ -220,6 +232,7 @@ function render() {
 }
 
 function renderVideo() {
+  document.title = APP_TITLE;
   setFrameSrc(ui.videoFrame, buildVideoSrc(state.video));
 }
 
@@ -313,6 +326,18 @@ function buildVideoSrc(source) {
   }
 
   return "";
+}
+
+function getCurrentStreamTitle() {
+  if (state.video === SOURCE.TWITCH && available.twitch) {
+    return `${available.twitch} - ${APP_TITLE}`;
+  }
+
+  if (state.video === SOURCE.YOUTUBE && available.youtube.channelId) {
+    return `${available.youtube.channelId} - ${APP_TITLE}`;
+  }
+
+  return APP_TITLE;
 }
 
 function pushQuery() {
